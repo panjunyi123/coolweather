@@ -1,6 +1,7 @@
 package com.coolweather.android.service;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -15,9 +16,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.coolweather.android.R;
+import com.coolweather.android.WeatherActivity;
 import com.coolweather.android.db.City;
 import com.coolweather.android.db.County;
 import com.coolweather.android.db.Province;
+import com.coolweather.android.gson.Weather;
 import com.coolweather.android.util.HttpUtil;
 import com.coolweather.android.util.Utility;
 import com.google.gson.annotations.Until;
@@ -88,7 +91,7 @@ public class ChooseAreaFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater,  ViewGroup container,  Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.choose_area,container,false);
         titleText = (TextView) view.findViewById(R.id.title_text);
         backbutton = (Button) view.findViewById(R.id.back_button);
@@ -99,7 +102,7 @@ public class ChooseAreaFragment extends Fragment {
     }
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+    public void onActivityCreated( Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -110,6 +113,12 @@ public class ChooseAreaFragment extends Fragment {
                 }else if (currentLevel == LEVEL_CITY){
                     selectedCity =cityList.get(position);
                     queryCounties();
+                }else if (currentLevel == LEVEL_COUNTY){
+                    String weatherId = countyList.get(position).getWeatherId();
+                    Intent intent = new Intent(getActivity(), WeatherActivity.class);
+                    intent.putExtra("weather_id",weatherId);
+                    startActivity(intent);
+                    getActivity().finish();
                 }
             }
         });
@@ -202,17 +211,6 @@ public class ChooseAreaFragment extends Fragment {
         showProgressDialog();
         HttpUtil.sendOkHttpRequest(address, new Callback() {
             @Override
-            public void onFailure(Call call, IOException e) {
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        closeProgressDialog();
-                        Toast.makeText(getContext(),"加载失败",Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-
-            @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String responseText = response.body().string();
                 boolean result = false;
@@ -240,6 +238,17 @@ public class ChooseAreaFragment extends Fragment {
                 }
 
             }
+            @Override
+            public void onFailure(Call call, IOException e) {
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        closeProgressDialog();
+                        Toast.makeText(getContext(),"加载失败",Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
         });
     }
 
